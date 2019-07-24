@@ -1,12 +1,13 @@
-import os 
-import numpy as np 
-import pandas as pd 
+import os
+import numpy as np
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup as BSoup
-from enum import Enum
 import time
 
-#===============================HELPER FUNCTIONS========================#
+# =======================HELPER FUNCTIONS=======================#
+
+
 def reverse_df(df): 
 
     first = df['timestamp'][0]
@@ -21,45 +22,50 @@ def reverse_df(df):
     elif first[2] > last[2]: 
         df = df.iloc[::-1]
 
-    return df 
-#=======================================================================#
+    return df
 
-"""Defines a Stock symbol bought at a certain price compared
+
+"""
+Defines a Stock symbol bought at a certain price compared
    @param symbol: Stock symbol 
    @param size: "compact" = last 100 values, "full"= full available range
    @param mode: Size of returned output "TIME_SERIES_INTRADAY", "TIME_SERIES_DAILY_ADJUSTED"
-  WARNING: Size & mode arguments have to be referenced as keyword arguments (improves readability)
+  WARNING: Size, interval & mode arguments have to be referenced as keyword arguments (improves readability)
 
    Further information: 
    https://www.alphavantage.co/documentation/
 """
-def getstock(symbol*,size="compact",interval ="15min",mode="TIME_SERIES_DAILY_ADJUSTED"): 
-    API_URL = "https://www.alphavantage.co/query"
+
+
+def getstock(symbol, *, size="compact",
+             interval="15min", mode="TIME_SERIES_DAILY_ADJUSTED", save_log=0):
+
     data = { 
-            "function":mode,
-            "symbol": symbol,
-            "outputsize":size,
-            "datatype":"csv",
-            "apikey": os.environ['ALPHAVANTAGE_API_KEY'],
-            }
-    if mode == "TIME_SERIES_INTRADAY": 
-        data = { 
-                "function":mode,
+                "function": mode,
                 "symbol": symbol,
-                "interval":interval
-                "outputsize":size,
-                "datatype":"csv",
+                "outputsize": size,
+                "datatype": "csv",
                 "apikey": os.environ['ALPHAVANTAGE_API_KEY'],
                 }
+    if mode == "TIME_SERIES_INTRADAY": 
+        data['interval'] = interval
 
-    response = requests.get(API_URL, params=data)
-    response.encoding="utf-8"
-
+    response = requests.get("https://www.alphavantage.co/query", 
+                            params=data, timeout=8)
+ 
     if response.status_code != 200: 
-        raise LookupError("[-]@getstock Value not found: "+symbol)
-
+        raise LookupError("[-]Invalid server response with Code: "
+                          + str(response.status_code)+"\n@Symbol: " + symbol)
+    
+    response.encoding = "utf-8"
+    
+    # Save entire response if logging is enabled
+    if save_log: 
+        with open("/var/stock"+symbol+".log", 'a') as f:
+            f.write(response.content.decode("utf-8")) 
     with open("/var/stock/"+symbol+".csv", 'w') as f: 
         f.write(response.text)
+
     data_read = False
 
     while not data_read:  
@@ -69,6 +75,7 @@ def getstock(symbol*,size="compact",interval ="15min",mode="TIME_SERIES_DAILY_AD
             df = reverse_df(df)
             data_read = True
 
+        # TODO: Inspect why df.index throws key-error on inconsistent basis
         except KeyError: 
             time.sleep(5)
             continue 
@@ -77,20 +84,23 @@ def getstock(symbol*,size="compact",interval ="15min",mode="TIME_SERIES_DAILY_AD
 
     return df
 
+# ======================================================================#
 
-class Stock:  
-    #Stock metadata
-    __symbol = ""
-    __name = ""
-    __market= ""
 
-    #Stock price variables
-    __initial = 0 
-    __diff = 0
-    __amount = 0 
-    __pieces = 0 
+class Stock:
 
-    #Dataframe 
+    # Stock metadata
+    __symbol: str = ""
+    __name: str = ""
+    __market: str = ""
+
+    # Stock price variables
+    __initial: int = 0
+    __diff: float = 0
+    __amount: float = 0
+    __pieces: int = 0
+
+    # Dataframe
     __df = None 
     
     """
@@ -98,7 +108,7 @@ class Stock:
     @param market = current stock exchange
     @param date = date of purchase in format 'yyyy-mm-dd'
     """
-    def __init__(self,symbol,price,pieces,market, date): 
+    def __init__(self, symbol, price, pieces, market, date):
         self.__symbol = symbol
         self.__market = market
         self.getname(self.__symbol)
@@ -108,48 +118,52 @@ class Stock:
         self.__pieces = pieces
         self.__initial = price
         self.__amount = self.__initial * self.__pieces
-        self.__diff = (self.__df['adjusted_close'][-1]/self.__initial -1) * 100
+        self.__diff = (self.__df['adjusted_close'][-1]/self.__initial - 1) * 100
 
-    def __repr__(self): 
+    def __repr__(self):
         return self.__symbol+"_Stock"
 
-    def __str__(self): 
+    def __str__(self):
         return self.__symbol
 
-    def getname(self,symbol): 
+    def getname(self, symbol):
+        """
+
+        :type symbol: String containing stock symbol of requested stock
+        """
         r = requests.get("https://finance.yahoo.com/quote/"+symbol)
-        soup = BSoup(r.text, features="lxml")
+        soup = BSoup(r.text, features='lxml')
         self.__name = soup.title.text.split("Stock")[0]
+        return 
 
-
-    """
-    Return the current increase/decrease based on initial investment in percent 
-    """
     def curr_difference(self): 
         df = getstock(self.__symbol)
-        self.__diff = (df['adjusted_close'][-1]/self.initial -1) * 100 
+        self.__diff = (df['adjusted_close'][-1]/self.__initial - 1) * 100
 
         return self.__diff
 
     def update_df(self): 
-        self.__df = getstock(self.__symbol, size="full")
+        try: 
+            self.__df = getstock(self.__symbol, size="full")
+        except LookupError:
+            time.sleep(5)
+            try: 
+                self.__df = getstock(self.__symbol, size="full")
+            except Exception:
+                pass
+        except requests.exceptions.Timeout: 
+            return
+
         self.statistics()
 
-    def statistics(self): 
-        timedeltas = [7,30,90,180,365]
-        
-        for delta in timedeltas: 
-            self.__df['MovAvg_'+ str(delta)+'d'] = self.__df['adjusted_close'].rolling(window=delta).mean()
-
-
     def information(self): 
-        name = self.__name.center(30).center(72,"=")
+        name = self.__name.center(30).center(72, "=")
         print(name)
-        print("Current volume:",str(self.__amount),"\n",
-             "Bought at:", str(self.__initial), "\n",
-             "Percentage change:",str(round(self.__diff,3)+"%\n")
+        print("Current volume:", str(self.__amount), '\n',
+              "Bought at:", str(self.__initial), '\n',
+              "Percentage change:", str(round(self.__diff, 3))+"%\n")
         
-    def update_new_inv(self,price,pieces): 
+    def make_new_inv(self, price, pieces): 
         addition = price * pieces 
         origin = self.__amount 
         total_amount = origin + addition
@@ -159,6 +173,29 @@ class Stock:
         self.__amount = total_amount
         self.__initial = total_amount / total_pieces
             
+    def statistics(self): 
+        # TODO
+        """if type(self.__df) == None: 
+            return 
+        """
+
+        timedeltas = [7, 30, 90, 180, 365]
+        
+        for delta in timedeltas: 
+            self.__df['MovAvg_' + str(delta)+'d'] = self.__df['adjusted_close'].rolling(window=delta).mean()
+
+        # TODO:Technical indicators Weighted Moving Average? MACD? VWAP? ADX? Chaikin AD? Sector performance (from
+        #      AlphaVantage? => more markets than US; QUANDL? )
+        # TODO: Move Statistics to Analysis.py
+
             
-            
-if __name__ =="__main__": 
+if __name__ == "__main__":
+
+    ls = ["TSLA", "ABT"]
+    stock = []
+
+    for _ in ls: 
+        stock.append(Stock(_, 100, 10, "NASDAQ", "2019-07-10"))
+
+    import code 
+    code.interact(local=locals())
