@@ -1,4 +1,5 @@
 import os
+import .Analysis as Ana
 import numpy as np
 import pandas as pd
 import requests
@@ -8,8 +9,11 @@ import time
 # =======================HELPER FUNCTIONS=======================#
 
 
-def reverse_df(df): 
+def reverse_df(df):
+    """
 
+    :type df: pandas.DataFrame containing index labelled 'timestamp' in yyyy-mm-dd-format
+    """
     first = df['timestamp'][0]
     last = df['timestamp'][-1]
     first = [int(x) for x in first.split("-")] 
@@ -73,16 +77,16 @@ def getstock(symbol, *, size="compact",
             df = pd.read_csv("/var/stock/"+symbol+".csv")
             df.index = df['timestamp']
             df = reverse_df(df)
+            del df['timestamp']
             data_read = True
+
+            return df
 
         # TODO: Inspect why df.index throws key-error on inconsistent basis
         except KeyError: 
             time.sleep(5)
             continue 
 
-    del df['timestamp']
-
-    return df
 
 # ======================================================================#
 
@@ -173,22 +177,11 @@ class Stock:
         self.__amount = total_amount
         self.__initial = total_amount / total_pieces
             
-    def statistics(self): 
-        # TODO
-        """if type(self.__df) == None: 
-            return 
-        """
+    def statistics(self):
+        pass
+        # Analysis.macd(self.__df)
 
-        timedeltas = [7, 30, 90, 180, 365]
-        
-        for delta in timedeltas: 
-            self.__df['MovAvg_' + str(delta)+'d'] = self.__df['adjusted_close'].rolling(window=delta).mean()
 
-        # TODO:Technical indicators Weighted Moving Average? MACD? VWAP? ADX? Chaikin AD? Sector performance (from
-        #      AlphaVantage? => more markets than US; QUANDL? )
-        # TODO: Move Statistics to Analysis.py
-
-            
 if __name__ == "__main__":
 
     ls = ["TSLA", "ABT"]

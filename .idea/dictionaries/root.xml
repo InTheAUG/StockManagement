@@ -1,15 +1,19 @@
 <component name="ProjectDictionaryState">
   <dictionary name="root">
     <words>
+      <w>adcl</w>
       <w>alphavantage</w>
       <w>apikey</w>
+      <w>colname</w>
       <w>dataframe</w>
       <w>datatype</w>
       <w>getname</w>
       <w>getstock</w>
       <w>intraday</w>
       <w>lxml</w>
+      <w>macd</w>
       <w>outputsize</w>
+      <w>timedeltas</w>
       <w>tsla</w>
       <w>yyyy</w>
     </words>
