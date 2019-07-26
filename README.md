@@ -8,5 +8,6 @@ _Future plans_:
 * implementation of buy/sell signal on certain stock information 
 * adding GUI/ visual information 
 
-##### Who wrote this?
+#### Who the f#&% wrote this? 
+
 Well... I did, you're welcome. ;) 
