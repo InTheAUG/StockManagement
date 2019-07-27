@@ -8,7 +8,7 @@ import requests
 import numpy as np
 import pandas as pd
 
-from ..analysis import analysis
+from analysis import analysis
 from bs4 import BeautifulSoup as BSoup
 
 # =======================HELPER FUNCTIONS=======================#
@@ -181,6 +181,12 @@ class Stock:
 
     def statistics(self):
         self.__df = analysis.macd(self.__df)
+        # TODO: Incorporate other analysis params
         # TODO: Add plotting
+
+    def signals(self):
+        self.statistics()
+        pass
+        # TODO: build buy/sell signals from statistics
 
 
