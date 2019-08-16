@@ -16,7 +16,6 @@ from bs4 import BeautifulSoup as BSoup
 
 def reverse_df(df):
     """
-
     :type df: pandas.DataFrame containing index labelled 'timestamp' in yyyy-mm-dd-format
     """
     first = df['timestamp'][0]
@@ -30,6 +29,36 @@ def reverse_df(df):
         df = df.iloc[::-1]
     elif first[2] > last[2]: 
         df = df.iloc[::-1]
+
+    return df
+
+
+def getsector(save_log=False):
+    data = {
+        'function': 'sector',
+        'apikey': os.environ['ALPHAVANTAGE_API_KEY']
+    }
+
+    response = requests.get("https://www.alphavantage.co/query",
+                            params=data, timeout=8)
+
+    if response.status_code != 200:
+        raise LookupError("[-]Invalid server response with Code: "
+                          + str(response.status_code)+"\n@Sector")
+
+    response.encoding = "utf-8"
+
+    if save_log:
+        with open("/var/stock/sector.log", 'a') as f:
+            f.write(response.content.decode("utf-8"))
+    with open("/var/stock/sector.json", 'w') as f:
+        f.write(response.text)
+
+    df = pd.read_json("/var/stock/sector.json")
+
+    del df['Meta Data']
+    df.dropna(inplace=True)
+    df.interpolate(axis=0,inplace=True)
 
     return df
 
@@ -84,6 +113,7 @@ def getstock(symbol, *, size="compact",
             df = reverse_df(df)
             del df['timestamp']
             data_read = True
+            df.interpolate(axis=0, inplace=True)
 
             return df
 
@@ -102,6 +132,7 @@ class Stock:
     __symbol: str = ""
     __name: str = ""
     __market: str = ""
+    __sector: str = ""
 
     # Stock price variables
     __initial: int = 0
@@ -117,10 +148,11 @@ class Stock:
     @param market = current stock exchange
     @param date = date of purchase in format 'yyyy-mm-dd'
     """
-    def __init__(self, symbol, price, pieces, market, date):
+    def __init__(self, symbol, price, pieces, market, sector):
         self.__symbol = symbol
         self.__market = market
-        self.getname(self.__symbol)
+        self.__sector = sector
+        self._getname(self.__symbol)
 
         self.update_df() 
 
@@ -135,8 +167,8 @@ class Stock:
     def __str__(self):
         return self.__symbol
 
-    def getname(self, symbol):
-        r = requests.get("https://finance.yahoo.com/quote/"+symbol)
+    def _getname(self, symbol):
+        r = requests.get("https://finance.yahoo.com/quote/"+symbol, timeout=2)
         soup = BSoup(r.text, features='lxml')
         self.__name = soup.title.text.split("Stock")[0]
         return 
@@ -167,9 +199,9 @@ class Stock:
         print(name)
         print("Current volume:", str(self.__amount), '\n',
               "Bought at:", str(self.__initial), '\n',
-              "Percentage change:", str(round(self.__diff, 3))+"%\n")
+              "Percentage change:", str(round(self.curr_difference(), 3))+"%\n")
         
-    def make_new_inv(self, price, pieces): 
+    def new_inv(self, price, pieces):
         addition = price * pieces 
         origin = self.__amount 
         total_amount = origin + addition
@@ -179,14 +211,24 @@ class Stock:
         self.__amount = total_amount
         self.__initial = total_amount / total_pieces
 
+    def compare_sector(self, sector_df):
+        try:
+            entries = sector_df.loc[self.__sector]
+        except KeyError:
+            print("[-] Error at "+self.__name+" compare_sector: self.__sector: \""+self.__sector+"\" not found")
+            return
+
+
+
+
     def statistics(self):
         self.__df = analysis.macd(self.__df)
         # TODO: Incorporate other analysis params
         # TODO: Add plotting
 
     def signals(self):
+        signals = {}
         self.statistics()
         pass
+        # return signals
         # TODO: build buy/sell signals from statistics
-
-

@@ -1,7 +1,6 @@
 # StockManagement
 ## What is this? 
-* Small project using the AlphaVantage API for data collection on Stock Data and other financial information 
-(_Fonds, Commodities etc. in developement_) 
+* Small project using the AlphaVantage API for data collection on Stock Data and other financial information (_Fonds, Commodities etc. in developement_) 
 * implementation of certain analysis parameters (work in developement)
 
 _Future plans_: 

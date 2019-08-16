@@ -17,6 +17,7 @@ Adds additional columns to AlphaVantage-Dataframe
 # TODO:Technical indicators Weighted Moving Average? VWAP? ADX? Chaikin AD? Integrate Sector performance (from
 #      AlphaVantage? => more markets than US; QUANDL? )
 
+
 def sma(df):
         
     for delta in TIMEDELTAS:
@@ -47,9 +48,3 @@ def macd(df):
 
     return df
 
-
-if __name__ == "__main__":
-    df = pd.DataFrame([x for x in range(0, 100)] + [100]*100)
-
-    df[ADCL] = df[0]
-    print(macd(df))
