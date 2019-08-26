@@ -8,7 +8,7 @@ import requests
 import numpy as np
 import pandas as pd
 
-from analysis import analysis
+from analysis import tech_analysis
 from bs4 import BeautifulSoup as BSoup
 
 # =======================HELPER FUNCTIONS=======================#
@@ -141,7 +141,7 @@ class Stock:
     __pieces: int = 0
 
     # Dataframe
-    __df = None 
+    _df = None
     
     """
     @param symbol = Stock symbol
@@ -159,7 +159,7 @@ class Stock:
         self.__pieces = pieces
         self.__initial = price
         self.__amount = self.__initial * self.__pieces
-        self.__diff = (self.__df['adjusted_close'][-1]/self.__initial - 1) * 100
+        self.__diff = (self._df['adjusted_close'][-1] / self.__initial - 1) * 100
 
     def __repr__(self):
         return self.__symbol+"_Stock"
@@ -181,11 +181,11 @@ class Stock:
 
     def update_df(self): 
         try: 
-            self.__df = getstock(self.__symbol, size="full")
+            self._df = getstock(self.__symbol, size="full")
         except LookupError:
             time.sleep(5)
             try: 
-                self.__df = getstock(self.__symbol, size="full")
+                self._df = getstock(self.__symbol, size="full")
             except Exception:
                 pass
         except requests.exceptions.Timeout:
@@ -219,10 +219,14 @@ class Stock:
             return
 
 
+    def visual_macd(self):
+        self.statistics()
+        self._df["adjusted close", "MACD_short", 'MACD_long'].plot(grid=True, figsize=(8, 5))
 
 
     def statistics(self):
-        self.__df = analysis.macd(self.__df)
+        #Adds Moving average, exponential moving average and macd to self.df
+        self._df = tech_analysis.macd(self._df)
         # TODO: Incorporate other analysis params
         # TODO: Add plotting
 

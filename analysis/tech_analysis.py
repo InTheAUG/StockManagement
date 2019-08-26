@@ -1,3 +1,6 @@
+"""Provides interface for technical analysis parameteres based on a pd.DataFrame"""
+
+#TODO:
 # Add Analysis for technical indicators
 # Based on analysis add buy-signals if long-term-trends are established
 # Based on analysis add sell-signals if long-term-trends are established
@@ -46,5 +49,6 @@ def macd(df):
 
     df['MACD'] = df['EMA12'] - df['EMA26']
 
+    df['MACD_long'] = df['EMA30'] - df['EMA180']
     return df
 

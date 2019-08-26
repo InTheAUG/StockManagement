@@ -1,1 +1,1 @@
-from . import analysis
+from . import tech_analysis
