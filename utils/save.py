@@ -1,12 +1,18 @@
-from ..classes.stockclass import Stock
+from common import MODELS, STOCKFILES, SAVEPATH, PATHS
+from .build import makehomedir, checkforhomedirs
+import pickle
+import os
 
-def save(stock):
-   pass
 
-def load(symbol):
-    with open(symbol+'.save', 'r') as f:
-        data = [x.strip('\n') for x in f.readlines()]
+def save_to_pickle(model, filename):
+    with open(MODELS + filename, "wb") as f:
+        pickle.dump(model, f)
+    return
 
-    stock = Stock()
 
-    return stock
+def load_from_pickle(filepath):
+    with open(filepath, "rb") as f:
+        obj = pickle.load(f)
+
+    return obj
+

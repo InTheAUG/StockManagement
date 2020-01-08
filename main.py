@@ -1,12 +1,15 @@
-from classes.stockclass import Stock
-import time
+from get import alphavantage as alpha
+from common import *
+from utils import build
+import os
 
-ls = ["TSLA", "ABT", "NSRGY"]
-stock = []
+if not build.checkforhomedirs():
+    build.makehomedir()
 
-for _ in ls:
-    time.sleep(5)
-    stock.append(Stock(_, 100, 10, "NASDAQ", "2019-07-10"))
+stock = ["TSLA", "MSFT", "AAPL"]
 
-import code
-code.interact(local=locals())
+df = alpha.build_df()
+
+breakpoint()
+
+

@@ -1,0 +1,5 @@
+SAVEPATH = "/var/stock/"
+MODELS = SAVEPATH + "models/"
+STOCKFILES = SAVEPATH + "stockfiles/"
+
+PATHS = [SAVEPATH, MODELS, STOCKFILES]
