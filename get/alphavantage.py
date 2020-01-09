@@ -6,6 +6,7 @@ import time
 import numpy as np
 import pandas as pd
 import requests
+from warnings import warn
 
 from analysis.tech_analysis import buildtechanalysis
 from utils.build import initialize_env, remove_env
@@ -78,12 +79,16 @@ def getstock(symbol, size="compact",
     response = requests.get("https://www.alphavantage.co/query", 
                             params=data, timeout=8)
  
-    if response.status_code != 200: 
+    if response.status_code != 200:
         raise LookupError("[-]Invalid server response with Code: "
                           + str(response.status_code)+"\n@Symbol: " + symbol)
-    
+
     response.encoding = "utf-8"
-    
+
+    if response.text == "{}":
+        warn("[-]Response to stock request for {} failed.".format(symbol), stacklevel=2)
+        return
+
     # Save entire response if logging is enabled
     if save_log:
         with open(STOCKFILES + symbol + ".log", 'a') as f:

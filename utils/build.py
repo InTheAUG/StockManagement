@@ -3,17 +3,11 @@ import pathlib
 from common import FILEPATHS, MODELS, STOCKFILES, SAVEPATH, ALPHAVANTAGE_KEY_PATH, ALPHAVANTAGE_KEY_VAR
 
 
-def checkforhomedirs():
+def mkhomedirs(paths):
     for path in FILEPATHS:
         if not os.path.exists(path):
-            return False
-
+            os.makedirs(path)
     return True
-
-
-def makehomedir():
-    os.makedirs(MODELS)
-    os.mkdir(STOCKFILES)
 
 
 def initialize_env():
