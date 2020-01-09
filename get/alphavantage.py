@@ -60,7 +60,7 @@ Defines a Stock symbol bought at a certain price compared
 def getstock(symbol, size="compact",
              interval="15min", mode="TIME_SERIES_DAILY_ADJUSTED", save_log=False):
 
-    key = os.getenv(ALPHAVANTAGE_KEY_VAR, None)
+    key = os.getenv(ALPHAVANTAGE_KEY_VAR, False)
     if not key:
         initialize_env()
         key = os.getenv(ALPHAVANTAGE_KEY_VAR)
@@ -132,7 +132,7 @@ def build_df():
     for stock in stocks[1:]:
         current = append_col_names(buildtechanalysis(reverse_df(pd.read_csv(STOCKFILES + stock))), 'timestamp',
                                               stock.split('.')[0])
-        df = df.merge(current,how='outer', on='timestamp')
+        df = df.merge(current, sort=True, how='outer', on='timestamp')
 
     df.set_index('timestamp', inplace=True)
 

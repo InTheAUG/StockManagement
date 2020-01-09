@@ -18,11 +18,15 @@ def makehomedir():
 
 def initialize_env():
     with open(ALPHAVANTAGE_KEY_PATH, "r") as f:
-        key = f.readline()
-    os.putenv(ALPHAVANTAGE_KEY_VAR, key)
+        key = f.readline().replace("\n", "")
+
+    os.environ[ALPHAVANTAGE_KEY_VAR]= key
+
+    return
 
 
 def remove_env():
-    os.unsetenv(ALPHAVANTAGE_KEY_VAR)
+    del os.environ[ALPHAVANTAGE_KEY_VAR]
+    return
 
 
