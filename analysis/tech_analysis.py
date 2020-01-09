@@ -8,7 +8,6 @@
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 TIMEDELTAS = [7, 12, 26, 30, 90, 180, 270]
 ADCL = 'adjusted_close'

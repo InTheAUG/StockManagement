@@ -1,16 +1,15 @@
 # TODO: Build statistics method for Stock
 # TODO: getetf; getindexes;
 import os
-from pathlib import Path
-from common import PATHS, SAVEPATH, MODELS, STOCKFILES
-from analysis.tech_analysis import buildtechanalysis
 import time
-import requests
+
 import numpy as np
 import pandas as pd
+import requests
 
-from analysis import tech_analysis
-from bs4 import BeautifulSoup as BSoup
+from analysis.tech_analysis import buildtechanalysis
+from utils.build import initialize_env, remove_env
+from common import FILEPATHS, SAVEPATH, MODELS, STOCKFILES, ALPHAVANTAGE_KEY_VAR
 
 # =======================HELPER FUNCTIONS=======================#
 
@@ -61,12 +60,17 @@ Defines a Stock symbol bought at a certain price compared
 def getstock(symbol, size="compact",
              interval="15min", mode="TIME_SERIES_DAILY_ADJUSTED", save_log=False):
 
-    data = { 
+    key = os.getenv(ALPHAVANTAGE_KEY_VAR, None)
+    if not key:
+        initialize_env()
+        key = os.getenv(ALPHAVANTAGE_KEY_VAR)
+
+    data = {
                 "function": mode,
                 "symbol": symbol,
                 "outputsize": size,
                 "datatype": "csv",
-                "apikey": os.environ['ALPHAVANTAGE_API_KEY'],
+                "apikey": key,
                 }
     if mode == "TIME_SERIES_INTRADAY": 
         data['interval'] = interval
@@ -115,17 +119,19 @@ def append_col_names(df, exclude, append_val):
 
 
 def build_df():
+
     files = os.listdir(STOCKFILES)
+    if not files:
+        return None
+
     stocks = [x for x in files if '.csv' in x]
 
     df = reverse_df(pd.read_csv(STOCKFILES + stocks[0]))
-
     df = append_col_names(buildtechanalysis(df), 'timestamp', stocks[0].split('.')[0])
 
     for stock in stocks[1:]:
         current = append_col_names(buildtechanalysis(reverse_df(pd.read_csv(STOCKFILES + stock))), 'timestamp',
                                               stock.split('.')[0])
-        breakpoint()
         df = df.merge(current,how='outer', on='timestamp')
 
     df.set_index('timestamp', inplace=True)

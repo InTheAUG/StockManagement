@@ -8,7 +8,10 @@ if not build.checkforhomedirs():
 
 stock = ["TSLA", "MSFT", "AAPL"]
 
+alpha.getstocklist(stock, size='full')
+
 df = alpha.build_df()
+
 
 breakpoint()
 

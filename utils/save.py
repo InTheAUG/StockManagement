@@ -1,4 +1,4 @@
-from common import MODELS, STOCKFILES, SAVEPATH, PATHS
+from common import MODELS, STOCKFILES, SAVEPATH, FILEPATHS
 from .build import makehomedir, checkforhomedirs
 import pickle
 import os
