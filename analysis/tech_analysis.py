@@ -11,6 +11,7 @@ import pandas as pd
 
 TIMEDELTAS = [7, 12, 26, 30, 90, 180, 270]
 ADCL = 'adjusted_close'
+CL = "close"
 
 """
 Adds additional columns to AlphaVantage-Dataframe 
@@ -21,29 +22,39 @@ Adds additional columns to AlphaVantage-Dataframe
 #      AlphaVantage? => more markets than US; QUANDL? )
 
 
-def returns(df):
-    df['Change1'] = df[ADCL].shift(-1) - df[ADCL]
-    df['Return1'] = (df['Change1'] / df[ADCL]) * 100
+def returns(df, target=ADCL):
+
+    if ADCL not in df:
+        target = CL
+
+    df['Change1'] = df[target].shift(-1) - df[target]
+    df['Return1'] = (df['Change1'] / df[target]) * 100
 
     for delta in TIMEDELTAS:
-        df['Change' + str(delta)] = df[ADCL].shift(-delta) - df[ADCL]
-        df['Return' + str(delta)] = (df['Change' + str(delta)] / df[ADCL]) * 100
+        df['Change' + str(delta)] = df[target].shift(-delta) - df[target]
+        df['Return' + str(delta)] = (df['Change' + str(delta)] / df[target]) * 100
 
     return df
 
 
-def sma(df):
+def sma(df, target=ADCL):
+    if ADCL not in df:
+        target = CL
+
     for delta in TIMEDELTAS:
-        df['SMA' + str(delta)] = df[ADCL].rolling(window=delta).mean()
+        df['SMA' + str(delta)] = df[target].rolling(window=delta).mean()
     return df
 
 
-def ema(df):
+def ema(df, target=ADCL):
+    if ADCL not in df:
+        target = CL
+
     for delta in TIMEDELTAS:
         if "SMA"+str(delta) not in df:
             df = sma(df)
         colname = 'EMA' + str(delta)
-        df[colname] = df[ADCL].ewm(span=delta, min_periods=delta).mean()
+        df[colname] = df[target].ewm(span=delta, min_periods=delta).mean()
 
     return df
 

@@ -6,6 +6,7 @@ import time
 import numpy as np
 import pandas as pd
 import requests
+from warnings import warn
 
 from analysis.tech_analysis import buildtechanalysis
 from utils.build import initialize_env, remove_env
@@ -60,7 +61,7 @@ Defines a Stock symbol bought at a certain price compared
 def getstock(symbol, size="compact",
              interval="15min", mode="TIME_SERIES_DAILY_ADJUSTED", save_log=False):
 
-    key = os.getenv(ALPHAVANTAGE_KEY_VAR, None)
+    key = os.getenv(ALPHAVANTAGE_KEY_VAR, False)
     if not key:
         initialize_env()
         key = os.getenv(ALPHAVANTAGE_KEY_VAR)
@@ -78,12 +79,16 @@ def getstock(symbol, size="compact",
     response = requests.get("https://www.alphavantage.co/query", 
                             params=data, timeout=8)
  
-    if response.status_code != 200: 
+    if response.status_code != 200:
         raise LookupError("[-]Invalid server response with Code: "
                           + str(response.status_code)+"\n@Symbol: " + symbol)
-    
+
     response.encoding = "utf-8"
-    
+
+    if response.text == "{}":
+        warn("[-]Response to stock request for {} failed.".format(symbol), stacklevel=2)
+        return
+
     # Save entire response if logging is enabled
     if save_log:
         with open(STOCKFILES + symbol + ".log", 'a') as f:
@@ -132,7 +137,7 @@ def build_df():
     for stock in stocks[1:]:
         current = append_col_names(buildtechanalysis(reverse_df(pd.read_csv(STOCKFILES + stock))), 'timestamp',
                                               stock.split('.')[0])
-        df = df.merge(current,how='outer', on='timestamp')
+        df = df.merge(current, sort=True, how='outer', on='timestamp')
 
     df.set_index('timestamp', inplace=True)
 

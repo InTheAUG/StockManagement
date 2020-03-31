@@ -1,17 +1,14 @@
 from get import alphavantage as alpha
-from common import *
+import common
 from utils import build
-import os
 
-if not build.checkforhomedirs():
-    build.makehomedir()
+build.mkhomedirs(common.FILEPATHS)
 
-stock = ["TSLA", "MSFT", "AAPL"]
+stock = ["IXIC"]
 
-alpha.getstocklist(stock, size='full')
+alpha.getstocklist(stock)
 
 df = alpha.build_df()
-
 
 breakpoint()
 
