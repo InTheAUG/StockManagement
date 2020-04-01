@@ -42,7 +42,6 @@ def parseStrings(dc):
 
         if val in rp: 
             val = rp[val]
-            print()
         try: 
             val = float(val)
         except ValueError: 
@@ -76,7 +75,7 @@ def buildETFDict(isin):
         'TER': None,
         'WKN': None,
         'Replication': None,
-        'Position': None,
+        'Positions': None,
         'Retstrategy': None,
     }
     if http := getHTTP(isin):
@@ -99,7 +98,11 @@ def buildETFDict(isin):
 def error(isin): 
     print("Could not process {}".format(isin))
 
-def main(): 
+def etfDBfromList(isin_list): 
+    """
+    Read an etf_list in format["ISIN Industry_descriptor",...] 
+    and build a pandas-DataFrame from the obtained information. 
+    """
     fonds = []
 
     with open("etffile") as f: 
@@ -109,15 +112,27 @@ def main():
         split = line.split()
         isin = split[0]
         ind = split[1]
+
         if data := buildETFDict(isin): 
             data['Industry'] = ind
             fonds.append(data)
         else:
             error(isin)
-    df = pd.DataFrame(fonds)
 
-    print(df)
+    return pd.DataFrame(fonds)
 
+def main(): 
+    fonds = []
+
+    with open("etffile") as f: 
+        lines = [x.replace("\n","") for x in f.readlines()]
+
+    df = etfDBfromList(lines)
+    return df 
 
 if __name__ == "__main__": 
-    main()
+    import code 
+
+    df = main()
+    code.interact(local=locals())
+
